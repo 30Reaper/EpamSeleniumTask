@@ -1,6 +1,6 @@
 <Solution>
-  <Folder Name="/Solution Items/">
-    <File Path="Task.md" />
-  </Folder>
-  <Project Path="EpamSeleniumTask/EpamSeleniumTask.csproj" />
+  <Folder Name="/Solution Items/" />
+  <Project Path="EpamSeleniumTask.Business/EpamSeleniumTask.Business.csproj" />
+  <Project Path="EpamSeleniumTask.Core/EpamSeleniumTask.Core.csproj" />
+  <Project Path="EpamSeleniumTask.Tests/EpamSeleniumTask.Tests.csproj" />
 </Solution>

@@ -1,10 +1,11 @@
 using OpenQA.Selenium;
+using Microsoft.Extensions.Logging;
 
-namespace EpamSeleniumTask.Pages;
+namespace EpamSeleniumTask.Business.Pages;
 
 public sealed class ArticlePage : EpamPage
 {
-    public ArticlePage(IWebDriver driver, string websiteUrl) : base(driver, websiteUrl)
+    public ArticlePage(IWebDriver driver, string websiteUrl, ILogger logger) : base(driver, websiteUrl, logger)
     {
     }
 

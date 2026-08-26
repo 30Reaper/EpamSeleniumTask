@@ -1,56 +1,26 @@
-using EpamSeleniumTask.Pages;
+using EpamSeleniumTask.Business.Pages;
 using Microsoft.Extensions.Configuration;
-using OpenQA.Selenium.Chrome;
+using Microsoft.Extensions.Logging;
+using OpenQA.Selenium;
+using System.Linq;
 using Xunit;
 
 namespace EpamSeleniumTask.Tests;
 
-public class EpamTests
+public class EpamTests : TestBase
 {
-    private readonly IConfiguration _configuration;
-
-    public EpamTests()
-    {
-        _configuration = new ConfigurationBuilder()
-            .SetBasePath(AppContext.BaseDirectory)
-            .AddJsonFile("appsettings.json")
-            .Build();
-    }
-
-    private string WebsiteUrl => _configuration["WebsiteUrl"]!;
-
-    private static ChromeDriver CreateDriver(string? downloadDirectory = null)
-    {
-        ChromeOptions options = new();
-        options.AddArgument("--start-maximized");
-
-        if (downloadDirectory is not null)
-        {
-            options.AddUserProfilePreference("download.default_directory", downloadDirectory);
-            options.AddUserProfilePreference("download.prompt_for_download", false);
-            options.AddUserProfilePreference("plugins.always_open_pdf_externally", true);
-        }
-
-        return new ChromeDriver(options);
-    }
-
     [Theory]
     [InlineData("Java", "Ukraine")]
     public void SearchForPosition(string programmingLanguage, string country)
     {
-        using ChromeDriver driver = CreateDriver();
-
-        try
+        RunTest(driver =>
         {
-            JobSearchPage searchPage = new(driver, WebsiteUrl);
+            var logger = LoggerFactory.CreateLogger<JobSearchPage>();
+            JobSearchPage searchPage = new(driver, WebsiteUrl, logger);
             string jobDetails = searchPage.Search(programmingLanguage, country);
 
             Assert.Contains(programmingLanguage, jobDetails, StringComparison.OrdinalIgnoreCase);
-        }
-        finally
-        {
-            driver.Quit();
-        }
+        });
     }
 
     [Theory]
@@ -59,11 +29,10 @@ public class EpamTests
     [InlineData("Automation")]
     public void GlobalSearch(string searchText)
     {
-        using ChromeDriver driver = CreateDriver();
-
-        try
+        RunTest(driver =>
         {
-            SearchResultsPage resultsPage = new(driver, WebsiteUrl);
+            var logger = LoggerFactory.CreateLogger<SearchResultsPage>();
+            SearchResultsPage resultsPage = new(driver, WebsiteUrl, logger);
             IReadOnlyCollection<string> resultTitles = resultsPage.Search(searchText);
 
             Assert.NotEmpty(resultTitles);
@@ -73,11 +42,7 @@ public class EpamTests
             Assert.True(
                 allResultsContainSearchText,
                 $"Not all search result links contain '{searchText}'.");
-        }
-        finally
-        {
-            driver.Quit();
-        }
+        });
     }
 
     [Theory]
@@ -87,27 +52,28 @@ public class EpamTests
         string downloadDirectory = Path.Combine(Path.GetTempPath(), $"epam-download-{Guid.NewGuid():N}");
         Directory.CreateDirectory(downloadDirectory);
 
-        using ChromeDriver driver = CreateDriver(downloadDirectory);
-
         try
         {
-            HomePage homePage = new(driver, WebsiteUrl);
-            homePage.Open();
-            homePage.OpenCodeOfEthicalConduct();
-
-            string downloadedFile = WaitForDownload(downloadDirectory, expectedFileName);
-
-            string actualFileName = Path.GetFileName(downloadedFile);
-            if (!string.Equals(actualFileName, expectedFileName, StringComparison.OrdinalIgnoreCase))
+            RunTest(driver =>
             {
-                string lowered = actualFileName.ToLowerInvariant();
-                Assert.True(lowered.Contains("code") && lowered.Contains("conduct"),
-                    $"Downloaded file name '{actualFileName}' does not match expected '{expectedFileName}' and does not look like the Code of Conduct file.");
-            }
+                var logger = LoggerFactory.CreateLogger<HomePage>();
+                HomePage homePage = new(driver, WebsiteUrl, logger);
+                homePage.Open();
+                homePage.OpenCodeOfEthicalConduct();
+
+                string downloadedFile = WaitForDownload(downloadDirectory, expectedFileName);
+
+                string actualFileName = Path.GetFileName(downloadedFile);
+                if (!string.Equals(actualFileName, expectedFileName, StringComparison.OrdinalIgnoreCase))
+                {
+                    string lowered = actualFileName.ToLowerInvariant();
+                    Assert.True(lowered.Contains("code") && lowered.Contains("conduct"),
+                        $"Downloaded file name '{actualFileName}' does not match expected '{expectedFileName}' and does not look like the Code of Conduct file.");
+                }
+            }, downloadDirectory);
         }
         finally
         {
-            driver.Quit();
             Directory.Delete(downloadDirectory, true);
         }
     }
@@ -116,11 +82,10 @@ public class EpamTests
     [InlineData(2)]
     public void InsightsCarouselTitleMatchesArticleTitle(int swipeCount)
     {
-        using ChromeDriver driver = CreateDriver();
-
-        try
+        RunTest(driver =>
         {
-            InsightsPage insightsPage = new(driver, WebsiteUrl);
+            var logger = LoggerFactory.CreateLogger<InsightsPage>();
+            InsightsPage insightsPage = new(driver, WebsiteUrl, logger);
             insightsPage.Open();
             insightsPage.SwipeCarousel(swipeCount);
             string carouselTitle = insightsPage.GetActiveArticleTitle();
@@ -128,11 +93,7 @@ public class EpamTests
             ArticlePage articlePage = insightsPage.OpenActiveArticle();
 
             Assert.Equal(carouselTitle, articlePage.GetTitle());
-        }
-        finally
-        {
-            driver.Quit();
-        }
+        });
     }
 
     private static string WaitForDownload(string directory, string expectedFileName)

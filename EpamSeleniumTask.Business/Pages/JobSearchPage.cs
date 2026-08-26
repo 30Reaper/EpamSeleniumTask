@@ -1,15 +1,17 @@
 using OpenQA.Selenium;
+using Microsoft.Extensions.Logging;
 
-namespace EpamSeleniumTask.Pages;
+namespace EpamSeleniumTask.Business.Pages;
 
 public sealed class JobSearchPage : EpamPage
 {
-    public JobSearchPage(IWebDriver driver, string websiteUrl) : base(driver, websiteUrl)
+    public JobSearchPage(IWebDriver driver, string websiteUrl, ILogger logger) : base(driver, websiteUrl, logger)
     {
     }
 
     public string Search(string programmingLanguage, string country)
     {
+        Logger.LogInformation("Searching jobs for {Language} in {Country}", programmingLanguage, country);
         Driver.Navigate().GoToUrl(WebsiteUrl);
         AcceptCookies();
         Visible(By.LinkText("Careers")).Click();
@@ -49,6 +51,7 @@ public sealed class JobSearchPage : EpamPage
         });
 
         Visible(By.Name("submit_search_box_button")).Click();
+        Logger.LogInformation("Submitted job search");
         By jobs = By.XPath("//div[@data-testid='accordion-section-container']");
         Wait.Until(driver => driver.FindElements(jobs).Count > 0);
 
@@ -75,6 +78,7 @@ public sealed class JobSearchPage : EpamPage
             var elements = driver.FindElements(jobs);
             var last = elements.LastOrDefault();
             var text = last?.Text;
+            Logger.LogInformation("Retrieved job details");
             return !string.IsNullOrEmpty(text) ? text : null;
         });
     }

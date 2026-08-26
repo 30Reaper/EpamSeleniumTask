@@ -2,17 +2,19 @@ using OpenQA.Selenium;
 using OpenQA.Selenium.Interactions;
 using System.Linq;
 using System.Collections.Generic;
+using Microsoft.Extensions.Logging;
 
-namespace EpamSeleniumTask.Pages;
+namespace EpamSeleniumTask.Business.Pages;
 
 public sealed class SearchResultsPage : EpamPage
 {
-    public SearchResultsPage(IWebDriver driver, string websiteUrl) : base(driver, websiteUrl)
+    public SearchResultsPage(IWebDriver driver, string websiteUrl, ILogger logger) : base(driver, websiteUrl, logger)
     {
     }
 
     public IReadOnlyCollection<string> Search(string searchText)
     {
+        Logger.LogInformation("Performing global search for {SearchText}", searchText);
         Driver.Navigate().GoToUrl(WebsiteUrl);
         AcceptCookies();
         Visible(By.ClassName("search-icon")).Click();
@@ -46,9 +48,12 @@ public sealed class SearchResultsPage : EpamPage
             previousCount = currentCount;
         }
 
-        return Driver.FindElements(By.CssSelector("article.search-results__item a.search-results__title-link"))
+        var titles = Driver.FindElements(By.CssSelector("article.search-results__item a.search-results__title-link"))
             .Select(link => link.Text)
             .Where(text => !string.IsNullOrWhiteSpace(text))
             .ToList();
+
+        Logger.LogInformation("Found {Count} search results", titles.Count);
+        return titles;
     }
 }
