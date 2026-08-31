@@ -28,6 +28,7 @@ public abstract class EpamPage
         }
         catch (WebDriverTimeoutException)
         {
+            // If the cookie consent button is not found, it may have already been accepted or not present; ignore
         }
     }
 
@@ -39,4 +40,28 @@ public abstract class EpamPage
 
     protected IWebElement Present(By locator) => Wait.Until(driver =>
         driver.FindElements(locator).FirstOrDefault());
+
+    protected void WaitForPageLoad()
+    {
+        try
+        {
+            Wait.Until(driver =>
+            {
+                try
+                {
+                    var js = (IJavaScriptExecutor)driver;
+                    string ready = js.ExecuteScript("return document.readyState")?.ToString() ?? string.Empty;
+                    return string.Equals(ready, "complete", StringComparison.OrdinalIgnoreCase);
+                }
+                catch
+                {
+                    return false;
+                }
+            });
+        }
+        catch (WebDriverTimeoutException)
+        {
+            // Ignore timeout; page may still be partially loaded
+        }
+    }
 }

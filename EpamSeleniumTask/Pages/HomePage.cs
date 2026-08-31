@@ -22,4 +22,22 @@ public sealed class HomePage : EpamPage
         ((IJavaScriptExecutor)Driver).ExecuteScript("arguments[0].scrollIntoView({block: 'center'});", link);
         link.Click();
     }
+
+    public void OpenServicesMenuAndSelectCategory(string category)
+    {
+        IWebElement servicesLink = Visible(By.XPath("//a[contains(@class,'top-navigation__item-link') and normalize-space()='Services']"));
+        new Actions(Driver).MoveToElement(servicesLink).Perform();
+
+        try
+        {
+            IWebElement parentLi = servicesLink.FindElement(By.XPath("ancestor::li[contains(@class,'top-navigation__item')]"));
+            new Actions(Driver).MoveToElement(parentLi).Perform();
+        }
+        catch { /* ignore if structure differs */ }
+
+        By categoryLocator = By.XPath($"//a[contains(@class,'top-navigation__sub-link') and normalize-space()=\"{category}\"]");
+        IWebElement categoryLink = Visible(categoryLocator);
+        ((IJavaScriptExecutor)Driver).ExecuteScript("arguments[0].scrollIntoView({block: 'center'});", categoryLink);
+        categoryLink.Click();
+    }
 }
