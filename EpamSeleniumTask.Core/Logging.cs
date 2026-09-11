@@ -21,8 +21,12 @@ public static class Logging
 
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Is(level)
-            .WriteTo.Console()
-            .WriteTo.File(Path.Combine(logDir, "tests-.log"), rollingInterval: RollingInterval.Day)
+            .WriteTo.Console(
+                outputTemplate: "[{Timestamp:HH:mm:ss.fff}] [{Level:u3}] {Message:lj}{NewLine}{Exception}")
+            .WriteTo.File(
+                Path.Combine(logDir, "tests-.log"),
+                rollingInterval: RollingInterval.Day,
+                outputTemplate: "[{Timestamp:HH:mm:ss.fff}] [{Level:u3}] {Message:lj}{NewLine}{Exception}")
             .CreateLogger();
 
         _factory = new SerilogLoggerFactory(Log.Logger);

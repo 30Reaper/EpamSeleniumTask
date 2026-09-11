@@ -3,14 +3,15 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using System.Linq;
-using Xunit;
+using NUnit.Framework;
 
 namespace EpamSeleniumTask.Tests;
 
+[TestFixture]
+[Parallelizable(ParallelScope.All)]
 public class EpamTests : TestBase
 {
-    [Theory]
-    [InlineData("Java", "Ukraine")]
+    [TestCase("Java", "Ukraine")]
     public void SearchForPosition(string programmingLanguage, string country)
     {
         RunTest(driver =>
@@ -19,14 +20,13 @@ public class EpamTests : TestBase
             JobSearchPage searchPage = new(driver, WebsiteUrl, logger);
             string jobDetails = searchPage.Search(programmingLanguage, country);
 
-            Assert.Contains(programmingLanguage, jobDetails, StringComparison.OrdinalIgnoreCase);
+            Assert.That(jobDetails, Does.Contain(programmingLanguage).IgnoreCase);
         });
     }
 
-    [Theory]
-    [InlineData("BLOCKCHAIN")]
-    [InlineData("Cloud")]
-    [InlineData("Automation")]
+    [TestCase("BLOCKCHAIN")]
+    [TestCase("Cloud")]
+    [TestCase("Automation")]
     public void GlobalSearch(string searchText)
     {
         RunTest(driver =>
@@ -35,7 +35,7 @@ public class EpamTests : TestBase
             SearchResultsPage resultsPage = new(driver, WebsiteUrl, logger);
             IReadOnlyCollection<string> resultTitles = resultsPage.Search(searchText);
 
-            Assert.NotEmpty(resultTitles);
+            Assert.IsNotEmpty(resultTitles);
             bool allResultsContainSearchText = resultTitles.All(title =>
                 title.Contains(searchText, StringComparison.OrdinalIgnoreCase));
 
@@ -45,8 +45,7 @@ public class EpamTests : TestBase
         });
     }
 
-    [Theory]
-    [InlineData("Code-Of-Conduct_01_26.pdf")]
+    [TestCase("Code-Of-Conduct_01_26.pdf")]
     public void CodeOfEthicalConductIsDownloaded(string expectedFileName)
     {
         string downloadDirectory = Path.Combine(Path.GetTempPath(), $"epam-download-{Guid.NewGuid():N}");
@@ -78,8 +77,7 @@ public class EpamTests : TestBase
         }
     }
 
-    [Theory]
-    [InlineData(2)]
+    [TestCase(2)]
     public void InsightsCarouselTitleMatchesArticleTitle(int swipeCount)
     {
         RunTest(driver =>
@@ -92,7 +90,7 @@ public class EpamTests : TestBase
 
             ArticlePage articlePage = insightsPage.OpenActiveArticle();
 
-            Assert.Equal(carouselTitle, articlePage.GetTitle());
+            Assert.AreEqual(carouselTitle, articlePage.GetTitle());
         });
     }
 
@@ -126,6 +124,6 @@ public class EpamTests : TestBase
         }
 
         string files = string.Join(", ", Directory.GetFiles(directory).Select(Path.GetFileName));
-        throw new Xunit.Sdk.XunitException($"File '{expectedFileName}' was not downloaded. Files found: {files}");
+        throw new AssertionException($"File '{expectedFileName}' was not downloaded. Files found: {files}");
     }
 }
