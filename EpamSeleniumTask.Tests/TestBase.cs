@@ -11,6 +11,9 @@ public abstract class TestBase
 {
     protected IConfiguration Configuration { get; }
     protected ILoggerFactory LoggerFactory { get; }
+    protected IWebDriver? Driver { get; private set; }
+
+    protected string? DownloadDirectory { get; private set; }
 
     protected TestBase()
     {
@@ -27,8 +30,53 @@ public abstract class TestBase
 
         Configuration = builder.Build();
 
-        Logging.Init(Configuration);
         LoggerFactory = Logging.LoggerFactory ?? new Serilog.Extensions.Logging.SerilogLoggerFactory(Serilog.Log.Logger);
+    }
+
+    [NUnit.Framework.SetUp]
+    public void SetUp()
+    {
+        var props = NUnit.Framework.TestContext.CurrentContext.Test.Properties;
+        if (props.ContainsKey("Category") && props["Category"].Cast<string?>().Any(c => string.Equals(c, "Download", StringComparison.OrdinalIgnoreCase)))
+        {
+            DownloadDirectory = Path.Combine(Path.GetTempPath(), $"epam-download-{Guid.NewGuid():N}");
+            Directory.CreateDirectory(DownloadDirectory);
+        }
+
+        Driver = WebDriverProvider.Instance.GetOrCreate(Configuration, DownloadDirectory);
+        var logger = LoggerFactory.CreateLogger("Test");
+        logger.LogInformation("SetUp complete for test {TestName}", NUnit.Framework.TestContext.CurrentContext.Test.Name);
+    }
+
+    [NUnit.Framework.TearDown]
+    public void TearDown()
+    {
+        var logger = LoggerFactory.CreateLogger("Test");
+        try
+        {
+            WebDriverProvider.Instance.QuitAndCleanup();
+            logger.LogInformation("TearDown: WebDriver quit and cleaned up for test {TestName}", NUnit.Framework.TestContext.CurrentContext.Test.Name);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error during TearDown for test {TestName}", NUnit.Framework.TestContext.CurrentContext.Test.Name);
+        }
+
+        if (!string.IsNullOrEmpty(DownloadDirectory) && Directory.Exists(DownloadDirectory))
+        {
+            try
+            {
+                Directory.Delete(DownloadDirectory, true);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to delete download directory {DownloadDir}", DownloadDirectory);
+            }
+            finally
+            {
+                DownloadDirectory = null;
+            }
+        }
     }
 
     protected string WebsiteUrl => Configuration["WebsiteUrl"]!;
