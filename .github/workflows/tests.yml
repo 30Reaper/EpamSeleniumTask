@@ -39,7 +39,15 @@ jobs:
 
       - name: Run API tests
         continue-on-error: true
-        run: dotnet test EpamSeleniumTask.Tests/EpamSeleniumTask.Tests.csproj --no-build --configuration Release --filter "TestCategory=API"
+        run: dotnet test EpamSeleniumTask.Tests/EpamSeleniumTask.Tests.csproj --no-build --configuration Release --filter "TestCategory=API" --logger "trx;LogFileName=api-results.trx"
+
+      - name: Upload API test results
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-test-results
+          path: '**/api-results.trx'
+          if-no-files-found: warn
 
   ui-tests:
     runs-on: ubuntu-latest
@@ -62,7 +70,23 @@ jobs:
         run: dotnet build --no-restore --configuration Release
 
       - name: Run UI tests
-        run: dotnet test EpamSeleniumTask.Tests/EpamSeleniumTask.Tests.csproj --no-build --configuration Release --filter "Category!=API"
+        run: dotnet test EpamSeleniumTask.Tests/EpamSeleniumTask.Tests.csproj --no-build --configuration Release --filter "Category!=API" --logger "trx;LogFileName=ui-results.trx"
         env:
           Browser__Name: ${{ inputs.browser || 'Chrome' }}
           Browser__Headless: 'true'
+
+      - name: Upload UI test results
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-test-results
+          path: '**/ui-results.trx'
+          if-no-files-found: warn
+
+      - name: Upload screenshots
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-screenshots
+          path: '**/logs/**/*.png'
+          if-no-files-found: warn
