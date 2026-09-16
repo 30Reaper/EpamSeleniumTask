@@ -39,7 +39,7 @@ jobs:
 
       - name: Run API tests
         continue-on-error: true
-        run: dotnet test EpamSeleniumTask.Tests/EpamSeleniumTask.Tests.csproj --no-build --configuration Release --filter "Category=API"
+        run: dotnet test EpamSeleniumTask.Tests/EpamSeleniumTask.Tests.csproj --no-build --configuration Release --filter "TestCategory=API"
 
   ui-tests:
     runs-on: ubuntu-latest
