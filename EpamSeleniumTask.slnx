@@ -1,3 +1,8 @@
 <Solution>
-  <Project Path="EpamSeleniumTask/EpamSeleniumTask.csproj" />
+  <Folder Name="/Solution Items/">
+    <File Path=".github/workflows/tests.yml" />
+  </Folder>
+  <Project Path="EpamSeleniumTask.Business/EpamSeleniumTask.Business.csproj" />
+  <Project Path="EpamSeleniumTask.Core/EpamSeleniumTask.Core.csproj" />
+  <Project Path="EpamSeleniumTask.Tests/EpamSeleniumTask.Tests.csproj" />
 </Solution>
