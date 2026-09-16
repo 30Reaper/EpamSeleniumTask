@@ -25,10 +25,12 @@ public static class ScreenshotHelper
                 name = name.Replace(invalidChar, '_');
             }
 
+            string safeName = string.Concat(
+                name.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c));
+
             string fileName = Path.Combine(
                 directory,
-                $"{name}_{DateTime.UtcNow:yyyyMMdd_HHmmss}.png");
-
+                $"{safeName}_{DateTime.UtcNow:yyyyMMdd_HHmmss}.png");
             File.WriteAllBytes(fileName, screenshot.AsByteArray);
 
             Log.Information("Saved screenshot to {File}", fileName);
