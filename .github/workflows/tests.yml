@@ -3,7 +3,7 @@ name: Automated Tests
 on:
   pull_request:
     branches:
-      - main
+      - master
 
   schedule:
     - cron: '0 8 * * 1-5'
