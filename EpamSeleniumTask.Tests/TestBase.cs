@@ -68,17 +68,42 @@ public abstract class TestBase
     public void TearDown()
     {
         var logger = LoggerFactory.CreateLogger("Test");
+
         try
         {
+            var testStatus = NUnit.Framework.TestContext.CurrentContext.Result.Outcome.Status;
+
+            if (testStatus == NUnit.Framework.Interfaces.TestStatus.Failed &&
+                Driver != null)
+            {
+                string logDir = Configuration["Logging:LogDirectory"] ?? "logs";
+
+                ScreenshotHelper.Capture(
+                    Driver,
+                    logDir,
+                    NUnit.Framework.TestContext.CurrentContext.Test.Name);
+
+                logger.LogInformation(
+                    "Screenshot captured for failed test {TestName}",
+                    NUnit.Framework.TestContext.CurrentContext.Test.Name);
+            }
+
             WebDriverProvider.Instance.QuitAndCleanup();
-            logger.LogInformation("TearDown: WebDriver quit and cleaned up for test {TestName}", NUnit.Framework.TestContext.CurrentContext.Test.Name);
+
+            logger.LogInformation(
+                "TearDown: WebDriver quit and cleaned up for test {TestName}",
+                NUnit.Framework.TestContext.CurrentContext.Test.Name);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error during TearDown for test {TestName}", NUnit.Framework.TestContext.CurrentContext.Test.Name);
+            logger.LogError(
+                ex,
+                "Error during TearDown for test {TestName}",
+                NUnit.Framework.TestContext.CurrentContext.Test.Name);
         }
 
-        if (!string.IsNullOrEmpty(DownloadDirectory) && Directory.Exists(DownloadDirectory))
+        if (!string.IsNullOrEmpty(DownloadDirectory) &&
+            Directory.Exists(DownloadDirectory))
         {
             try
             {
@@ -86,7 +111,10 @@ public abstract class TestBase
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Failed to delete download directory {DownloadDir}", DownloadDirectory);
+                logger.LogWarning(
+                    ex,
+                    "Failed to delete download directory {DownloadDir}",
+                    DownloadDirectory);
             }
             finally
             {
