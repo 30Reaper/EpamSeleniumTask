@@ -1,0 +1,68 @@
+name: Automated Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+
+  schedule:
+    - cron: '0 8 * * 1-5'
+
+  workflow_dispatch:
+    inputs:
+      browser:
+        description: 'Browser for UI tests'
+        required: true
+        default: 'Chrome'
+        type: choice
+        options:
+          - Chrome
+
+jobs:
+  api-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build solution
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Run API tests
+        continue-on-error: true
+        run: dotnet test EpamSeleniumTask.Tests/EpamSeleniumTask.Tests.csproj --no-build --configuration Release --filter "Category=API"
+
+  ui-tests:
+    runs-on: ubuntu-latest
+    needs: api-tests
+    if: ${{ always() }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build solution
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Run UI tests
+        run: dotnet test EpamSeleniumTask.Tests/EpamSeleniumTask.Tests.csproj --no-build --configuration Release --filter "Category!=API"
+        env:
+          Browser__Name: ${{ inputs.browser || 'Chrome' }}
+          Browser__Headless: 'true'
