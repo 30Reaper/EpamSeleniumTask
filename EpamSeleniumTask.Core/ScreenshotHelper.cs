@@ -20,13 +20,10 @@ public static class ScreenshotHelper
 
             var screenshot = tsDriver.GetScreenshot();
 
-            foreach (char invalidChar in Path.GetInvalidFileNameChars())
-            {
-                name = name.Replace(invalidChar, '_');
-            }
+            string invalidChars = "<>:\"/\\|?*";
 
             string safeName = string.Concat(
-                name.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c));
+                name.Select(c => invalidChars.Contains(c) ? '_' : c));
 
             string fileName = Path.Combine(
                 directory,
