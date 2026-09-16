@@ -37,17 +37,33 @@ public abstract class TestBase
     public void SetUp()
     {
         var props = NUnit.Framework.TestContext.CurrentContext.Test.Properties;
-        if (props.ContainsKey("Category") && props["Category"].Cast<string?>().Any(c => string.Equals(c, "Download", StringComparison.OrdinalIgnoreCase)))
+
+        if (props.ContainsKey("Category") &&
+            props["Category"].Cast<string?>().Any(c =>
+                string.Equals(c, "Download", StringComparison.OrdinalIgnoreCase)))
         {
-            DownloadDirectory = Path.Combine(Path.GetTempPath(), $"epam-download-{Guid.NewGuid():N}");
+            DownloadDirectory = Path.Combine(
+                Path.GetTempPath(),
+                $"epam-download-{Guid.NewGuid():N}");
+
             Directory.CreateDirectory(DownloadDirectory);
         }
 
-        Driver = WebDriverProvider.Instance.GetOrCreate(Configuration, DownloadDirectory);
-        var logger = LoggerFactory.CreateLogger("Test");
-        logger.LogInformation("SetUp complete for test {TestName}", NUnit.Framework.TestContext.CurrentContext.Test.Name);
-    }
+        if (props.ContainsKey("Category") &&
+            props["Category"].Cast<string?>().Any(c =>
+                string.Equals(c, "API", StringComparison.OrdinalIgnoreCase)))
+        {
+            return;
+        }
 
+        Driver = WebDriverProvider.Instance.GetOrCreate(Configuration, DownloadDirectory);
+
+        var logger = LoggerFactory.CreateLogger("Test");
+
+        logger.LogInformation(
+            "SetUp complete for test {TestName}",
+            NUnit.Framework.TestContext.CurrentContext.Test.Name);
+    }
     [NUnit.Framework.TearDown]
     public void TearDown()
     {
